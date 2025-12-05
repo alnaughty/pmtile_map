@@ -1,0 +1,111 @@
+[
+    {
+        "place_id": 239487905,
+        "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+        "osm_type": "way",
+        "osm_id": 155021770,
+        "lat": "12.0702723",
+        "lon": "124.5937828",
+        "class": "highway",
+        "type": "tertiary",
+        "place_rank": 26,
+        "importance": 0.053388335240711036,
+        "addresstype": "road",
+        "name": "Cajurao Street",
+        "display_name": "Cajurao Street, Purok 6, Aguit-itan, Calbayog, Samar, Eastern Visayas, 6710, Philippines",
+        "address": {
+            "road": "Cajurao Street",
+            "neighbourhood": "Purok 6",
+            "quarter": "Aguit-itan",
+            "county": "Calbayog",
+            "state": "Samar",
+            "ISO3166-2-lvl4": "PH-WSA",
+            "region": "Eastern Visayas",
+            "ISO3166-2-lvl3": "PH-08",
+            "postcode": "6710",
+            "country": "Philippines",
+            "country_code": "ph"
+        },
+        "boundingbox": [
+            "12.0694537",
+            "12.0704953",
+            "124.5934443",
+            "124.5950257"
+        ]
+    },
+    {
+        "place_id": 239860586,
+        "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+        "osm_type": "way",
+        "osm_id": 254486309,
+        "lat": "12.0710079",
+        "lon": "124.5926836",
+        "class": "highway",
+        "type": "tertiary",
+        "place_rank": 26,
+        "importance": 0.053388335240711036,
+        "addresstype": "road",
+        "name": "Cajurao Street",
+        "display_name": "Cajurao Street, Purok 5, Dagum, Calbayog, Samar, Eastern Visayas, 6710, Philippines",
+        "address": {
+            "road": "Cajurao Street",
+            "neighbourhood": "Purok 5",
+            "quarter": "Dagum",
+            "county": "Calbayog",
+            "state": "Samar",
+            "ISO3166-2-lvl4": "PH-WSA",
+            "region": "Eastern Visayas",
+            "ISO3166-2-lvl3": "PH-08",
+            "postcode": "6710",
+            "country": "Philippines",
+            "country_code": "ph"
+        },
+        "boundingbox": [
+            "12.0707793",
+            "12.0738321",
+            "124.5901790",
+            "124.5930076"
+        ]
+    },
+    {
+        "code": "Ok",
+        "routes": [
+            {
+                "legs": [
+                    {
+                        "steps": [],
+                        "weight": 138.5,
+                        "summary": "",
+                        "duration": 138.5,
+                        "distance": 1183.3
+                    }
+                ],
+                "weight_name": "routability",
+                "geometry": "y|shAkxmwVd@gAv@kBiAa@OGgAa@iAc@gA_@vAuDx@qBp@gBDKDKj@aB|@wCf@}AKGmDwAUKmAe@SOiAmAQO_@Sc@BUPWR[b@APBHFJ?JALa@]",
+                "weight": 138.5,
+                "duration": 138.5,
+                "distance": 1183.3
+            }
+        ],
+        "waypoints": [
+            {
+                "hint": "TXOegFLsKoEfAAAAQAAAAAAAAAAAAAAAp9axQSuuL0IAAAAAAAAAAB8AAABAAAAAAAAAAAAAAAD2PgAA3CdtB58iuAAYKG0HECO4AAAAXwcAAAAA",
+                "location": [
+                    124.59414,
+                    12.067487
+                ],
+                "name": "Bugallon Street",
+                "distance": 14.10429738
+            },
+            {
+                "hint": "Tvycgk_8nIIiAAAAAAAAAAAAAAAAAAAAMXq_QQAAAAAAAAAAAAAAACIAAAAAAAAAAAAAAAAAAAD2PgAAVUBtB_IquADAPm0HcCy4AAAAfwIAAAAA",
+                "location": [
+                    124.600405,
+                    12.069618
+                ],
+                "name": "",
+                "distance": 61.07336993
+            }
+        ]
+    }
+]
