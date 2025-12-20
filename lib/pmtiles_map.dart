@@ -29,10 +29,10 @@ class PmtilesMap extends StatefulWidget {
   final List<Polygon>? polygons;
 
   @override
-  State<PmtilesMap> createState() => _PmtilesMapState();
+  State<PmtilesMap> createState() => PmtilesMapState();
 }
 
-class _PmtilesMapState extends State<PmtilesMap> {
+class PmtilesMapState extends State<PmtilesMap> {
   late final opts = widget.options;
   late double currentZoom = opts.initialZoom;
   late MapController mapController;
@@ -45,6 +45,12 @@ class _PmtilesMapState extends State<PmtilesMap> {
     });
     super.initState();
     mapController = MapController();
+  }
+
+  Future<void> animateToCenter(pm.LatLong target, {double? zoom}) async {
+    final dest = LatLng(target.latitude, target.longitude);
+
+    mapController.move(dest, zoom ?? currentZoom, id: 'animateToCenter');
   }
 
   Future<void> _generatePolylines() async {
@@ -86,21 +92,6 @@ class _PmtilesMapState extends State<PmtilesMap> {
       }
     }
   }
-  // Future<void> _generatePolylines() async {
-  //   if (widget.options.drawLineOn.isEmpty) return;
-  //   for (final DrawLineOnPoint point in widget.options.drawLineOn) {
-  //     final line = await TileMapGeoCodingService.fetchRoute(
-  //       pointA: point.start,
-  //       pointB: point.end,
-  //       color: point.color,
-  //       strokeWidth: point.strokeWidth,
-  //     );
-  //     if (line != null) {
-  //       polylines.add(line);
-  //       if (mounted) setState(() {});
-  //     }
-  //   }
-  // }
 
   @override
   Widget build(BuildContext context) {
