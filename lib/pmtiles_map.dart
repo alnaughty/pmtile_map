@@ -25,7 +25,7 @@ class PmtilesMap extends StatefulWidget {
     required this.options,
   });
   final TileMapOption options;
-  final List<Marker>? markers;
+  final List<PmTileMapMarker>? markers;
   final List<Polygon>? polygons;
 
   @override
@@ -168,7 +168,10 @@ class PmtilesMapState extends State<PmtilesMap> {
         ),
         MarkerLayer(markers: polylineCenterMarkers),
         if (widget.polygons != null) PolygonLayer(polygons: widget.polygons!),
-        if (widget.markers != null) MarkerLayer(markers: widget.markers!),
+        if (widget.markers != null)
+          MarkerLayer(
+            markers: (widget.markers ?? []).map((marker) => marker).toList(),
+          ),
       ],
     );
   }
@@ -196,4 +199,16 @@ class PmtilesMapState extends State<PmtilesMap> {
 
     return LatLng(lat, lng);
   }
+}
+
+class PmTileMapMarker extends Marker {
+  const PmTileMapMarker({
+    required super.point,
+    required super.child,
+    super.alignment,
+    super.height,
+    super.rotate,
+    super.width,
+    super.key,
+  });
 }
