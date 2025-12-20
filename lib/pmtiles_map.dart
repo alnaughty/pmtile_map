@@ -11,6 +11,7 @@ import 'package:pmtiles_map/src/pin_marker.dart';
 export 'package:pmtiles_map/src/models/tile_map_option.dart';
 export 'package:pmtiles_map/src/models/location_result.dart';
 import 'package:pmtiles_map/src/services/api_call.dart';
+export 'package:pmtiles_map/src/services/api_call.dart';
 export 'package:flutter_map/src/layer/polyline_layer/polyline_layer.dart';
 export 'package:pmtiles_map/src/models/drawline_on_point.dart';
 export 'package:pmtiles_map/pmtiles_map_picker.dart';
