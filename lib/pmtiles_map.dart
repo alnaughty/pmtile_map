@@ -170,7 +170,21 @@ class PmtilesMapState extends State<PmtilesMap> {
         if (widget.polygons != null) PolygonLayer(polygons: widget.polygons!),
         if (widget.markers != null)
           MarkerLayer(
-            markers: (widget.markers ?? []).map((marker) => marker).toList(),
+            markers: (widget.markers ?? [])
+                .map(
+                  (marker) => Marker(
+                    point: LatLng(
+                      marker.coordinates.latitude,
+                      marker.coordinates.longitude,
+                    ),
+                    child: marker.child,
+                    height: marker.height,
+                    width: marker.width,
+                    alignment: marker.alignment,
+                    rotate: marker.rotate,
+                  ),
+                )
+                .toList(),
           ),
       ],
     );
@@ -202,13 +216,15 @@ class PmtilesMapState extends State<PmtilesMap> {
 }
 
 class PmTileMapMarker extends Marker {
+  final pm.LatLong coordinates;
   const PmTileMapMarker({
-    required super.point,
+    super.point = const LatLng(0, 0),
     required super.child,
     super.alignment,
     super.height,
     super.rotate,
     super.width,
     super.key,
-  });
+    pm.LatLong? coordinates,
+  }) : coordinates = coordinates ?? const pm.LatLong(0, 0);
 }
