@@ -19,6 +19,19 @@ class LocationResult {
     this.countryCode,
     this.postalCode,
   });
+  factory LocationResult.fromJson(Map<String, dynamic> json) {
+    return LocationResult(
+      city: json['city'] as String?,
+      barangay: json['barangay'] as String?,
+      province: json['province'] as String?,
+      address: json['address'] as String?,
+      street: json['street'] as String?,
+      region: json['region'] as String?,
+      postalCode: json['postalCode'] as String?,
+      country: json['country'] as String?,
+      countryCode: json['countryCode'] as String?,
+    );
+  }
 
   @override
   String toString() => "${toMap()}";
