@@ -10,7 +10,7 @@ import 'package:pmtiles_map/src/services/api_call.dart';
 class PmtilesMapPicker extends StatefulWidget {
   final TileMapPickerOption options;
   final Widget? centerPin;
-  final Function(LocationResult) callback;
+  final Function(LocationResult, pm.LatLong) callback;
   const PmtilesMapPicker({
     super.key,
     required this.callback,
@@ -62,7 +62,7 @@ class _PmtilesMapPickerState extends State<PmtilesMapPicker>
     if (selectedLocation == location) return;
 
     final val = await TileMapGeoCodingService.reverseGeoCode(location);
-    widget.callback(val);
+    widget.callback(val, location);
   }
 
   void _onPointerDown() {
