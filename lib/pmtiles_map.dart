@@ -2,6 +2,7 @@ import 'dart:math' show cos, pow;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter_map_animations/flutter_map_animations.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:pmtiles_map/src/models/drawline_on_point.dart';
 import 'package:pmtiles_map/src/models/tile_map_option.dart';
@@ -32,10 +33,10 @@ class PmtilesMap extends StatefulWidget {
   State<PmtilesMap> createState() => PmtilesMapState();
 }
 
-class PmtilesMapState extends State<PmtilesMap> {
+class PmtilesMapState extends State<PmtilesMap> with TickerProviderStateMixin {
   late final opts = widget.options;
   late double currentZoom = opts.initialZoom;
-  late MapController mapController;
+  late final AnimatedMapController mapController;
   List<Polyline> polylines = [];
   List<Marker> polylineCenterMarkers = [];
   @override
@@ -44,13 +45,28 @@ class PmtilesMapState extends State<PmtilesMap> {
       await _generatePolylines();
     });
     super.initState();
-    mapController = MapController();
+    mapController = AnimatedMapController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+      curve: Curves.easeInOutCirc,
+      cancelPreviousAnimations: true,
+    );
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    mapController.dispose();
   }
 
   Future<void> animateToCenter(pm.LatLong target, {double? zoom}) async {
-    final dest = LatLng(target.latitude, target.longitude);
+    final LatLng dest = LatLng(target.latitude, target.longitude);
 
-    mapController.move(dest, zoom ?? currentZoom, id: 'animateToCenter');
+    await mapController.animateTo(
+      dest: dest,
+      zoom: zoom ?? currentZoom,
+      duration: mapController.duration,
+    );
   }
 
   Future<void> _generatePolylines() async {
@@ -96,7 +112,7 @@ class PmtilesMapState extends State<PmtilesMap> {
   @override
   Widget build(BuildContext context) {
     return FlutterMap(
-      mapController: mapController,
+      mapController: mapController.mapController,
       options: MapOptions(
         initialCenter: LatLng(
           widget.options.initialCenter.latitude,
