@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter_map_animations/flutter_map_animations.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:pmtiles_map/pmtiles_map.dart';
 import 'package:pmtiles_map/src/models/lat_long.dart' as pm;
@@ -19,12 +20,12 @@ class PmtilesMapPicker extends StatefulWidget {
   });
 
   @override
-  State<PmtilesMapPicker> createState() => _PmtilesMapPickerState();
+  State<PmtilesMapPicker> createState() => PmtilesMapPickerState();
 }
 
-class _PmtilesMapPickerState extends State<PmtilesMapPicker>
-    with SingleTickerProviderStateMixin {
-  late MapController mapController;
+class PmtilesMapPickerState extends State<PmtilesMapPicker>
+    with TickerProviderStateMixin {
+  late final AnimatedMapController mapController;
   late double currentZoom;
   pm.LatLong? selectedLocation;
 
@@ -34,7 +35,12 @@ class _PmtilesMapPickerState extends State<PmtilesMapPicker>
   @override
   void initState() {
     super.initState();
-    mapController = MapController();
+    mapController = AnimatedMapController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+      curve: Curves.easeInOutCirc,
+      cancelPreviousAnimations: true,
+    );
     currentZoom = widget.options.initialZoom;
     selectedLocation = widget.options.initialCenter;
 
@@ -56,8 +62,18 @@ class _PmtilesMapPickerState extends State<PmtilesMapPicker>
     super.dispose();
   }
 
+  Future<void> animateToCenter(pm.LatLong target, {double? zoom}) async {
+    final LatLng dest = LatLng(target.latitude, target.longitude);
+
+    await mapController.animateTo(
+      dest: dest,
+      zoom: zoom ?? currentZoom,
+      duration: mapController.duration,
+    );
+  }
+
   Future<void> _updateCenterLocation() async {
-    final center = mapController.camera.center;
+    final center = mapController.mapController.camera.center;
     final location = pm.LatLong(center.latitude, center.longitude);
     if (selectedLocation == location) return;
 
@@ -80,7 +96,7 @@ class _PmtilesMapPickerState extends State<PmtilesMapPicker>
       alignment: Alignment.center,
       children: [
         FlutterMap(
-          mapController: mapController,
+          mapController: mapController.mapController,
           options: MapOptions(
             initialCenter: LatLng(
               widget.options.initialCenter.latitude,
