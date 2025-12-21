@@ -96,6 +96,7 @@ class PmtilesMapState extends State<PmtilesMap> {
   @override
   Widget build(BuildContext context) {
     return FlutterMap(
+      mapController: mapController,
       options: MapOptions(
         initialCenter: LatLng(
           widget.options.initialCenter.latitude,
