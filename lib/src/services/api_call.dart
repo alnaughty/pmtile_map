@@ -95,6 +95,16 @@ class TileMapGeoCodingService {
     return distance;
   }
 
+  bool isWithinRadius({
+    required LatLong center,
+    required LatLong target,
+    required double radiusKm,
+  }) {
+    final distance = getDistanceInKm(pointA: center, pointB: target);
+
+    return distance <= radiusKm;
+  }
+
   static Future<Polyline>? fetchRoute({
     required LatLong pointA,
     required LatLong pointB,
