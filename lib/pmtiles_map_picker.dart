@@ -70,6 +70,11 @@ class PmtilesMapPickerState extends State<PmtilesMapPicker>
       zoom: zoom ?? currentZoom,
       duration: mapController.duration,
     );
+    final location = pm.LatLong(target.latitude, target.longitude);
+    if (selectedLocation == location) return;
+
+    final val = await TileMapGeoCodingService.reverseGeoCode(location);
+    widget.callback(val, location);
   }
 
   Future<void> _updateCenterLocation() async {
