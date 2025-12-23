@@ -12,10 +12,12 @@ class PmtilesMapPicker extends StatefulWidget {
   final TileMapPickerOption options;
   final Widget? centerPin;
   final Function(LocationResult, pm.LatLong) callback;
+  final pm.LatLong currentLocation;
   const PmtilesMapPicker({
     super.key,
     required this.callback,
     required this.options,
+    required this.currentLocation,
     this.centerPin,
   });
 
@@ -121,6 +123,20 @@ class PmtilesMapPickerState extends State<PmtilesMapPicker>
             ),
             if (widget.options.polygons != null)
               PolygonLayer(polygons: widget.options.polygons!),
+            MarkerLayer(
+              markers: [
+                Marker(
+                  point: LatLng(
+                    widget.currentLocation.latitude,
+                    widget.currentLocation.longitude,
+                  ),
+                  child: FlatPinMarker(
+                    color: Colors.blue,
+                    highlightColor: const Color.fromARGB(255, 99, 179, 245),
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
         // Animated pin
