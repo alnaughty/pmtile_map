@@ -16,6 +16,8 @@ class PmtilesMapPicker extends StatefulWidget {
   final TileMapPickerOption options;
   final Widget? centerPin;
   final Color pinColor;
+  final Widget? searchWidget;
+  final Widget? currentLocationWidget;
   final Gradient? pinGradient;
   final Function(CoordinatedLocationResult) callback;
   final pm.LatLong currentLocation;
@@ -23,6 +25,8 @@ class PmtilesMapPicker extends StatefulWidget {
   const PmtilesMapPicker({
     super.key,
     required this.callback,
+    this.currentLocationWidget,
+    this.searchWidget,
     required this.options,
     this.pinColor = Colors.red,
     this.pinGradient,
@@ -269,72 +273,83 @@ class PmtilesMapPickerState extends State<PmtilesMapPicker>
             ),
           ),
         ),
-        if (widget.options.enableSearch) ...{
+        if (widget.searchWidget != null ||
+            widget.currentLocationWidget != null) ...{
           Positioned(
-            top: 40,
-            left: 16,
-            right: 16,
+            top: 20,
+            right: 20,
+            left: 20,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 300),
-                  curve: Curves.easeInOut,
-                  width: isSearching
-                      ? MediaQuery.sizeOf(context).width.clamp(100, 400)
-                      : 50,
-                  height: 50,
-                  decoration: BoxDecoration(
-                    color: backgroundColor,
-                    borderRadius: BorderRadius.circular(25),
-                    boxShadow: [
-                      BoxShadow(
-                        blurRadius: 4,
-                        color: shadowColor,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    children: [
-                      IconButton(
-                        icon: Icon(
-                          isSearching ? Icons.search : Icons.search_outlined,
-                          color: textColor,
-                        ),
-                        onPressed: () {
-                          setState(() => isSearching = !isSearching);
-                          if (!isSearching) {
-                            searchController.clear();
-                            searchResults.clear();
-                          }
-                        },
-                      ),
-                      if (isSearching)
-                        Expanded(
-                          child: TextField(
-                            controller: searchController,
-                            onChanged: onSearchChanged,
-                            style: TextStyle(color: textColor),
-                            decoration: InputDecoration(
-                              hintText: 'Search address',
-                              hintStyle: TextStyle(color: hintColor),
-                              border: InputBorder.none,
-                            ),
-                          ),
-                        ),
-                      if (isSearching)
-                        IconButton(
-                          icon: Icon(Icons.clear, color: textColor),
-                          onPressed: () {
-                            searchController.clear();
-                            setState(() => searchResults.clear());
-                          },
-                        ),
-                    ],
-                  ),
+                Row(
+                  spacing: 10,
+                  children: [
+                    if (widget.searchWidget != null) ...{
+                      Expanded(child: widget.searchWidget!),
+                    },
+                    if (widget.currentLocationWidget != null) ...{
+                      widget.currentLocationWidget!,
+                    },
+                  ],
                 ),
-
+                // AnimatedContainer(
+                //   duration: const Duration(milliseconds: 300),
+                //   curve: Curves.easeInOut,
+                //   width: isSearching
+                //       ? MediaQuery.sizeOf(context).width.clamp(100, 400)
+                //       : 50,
+                //   height: 50,
+                //   decoration: BoxDecoration(
+                //     color: backgroundColor,
+                //     borderRadius: BorderRadius.circular(25),
+                //     boxShadow: [
+                //       BoxShadow(
+                //         blurRadius: 4,
+                //         color: shadowColor,
+                //         offset: const Offset(0, 2),
+                //       ),
+                //     ],
+                //   ),
+                //   child: Row(
+                //     children: [
+                //       IconButton(
+                //         icon: Icon(
+                //           isSearching ? Icons.search : Icons.search_outlined,
+                //           color: textColor,
+                //         ),
+                //         onPressed: () {
+                //           setState(() => isSearching = !isSearching);
+                //           if (!isSearching) {
+                //             searchController.clear();
+                //             searchResults.clear();
+                //           }
+                //         },
+                //       ),
+                //       if (isSearching)
+                //         Expanded(
+                //           child: TextField(
+                //             controller: searchController,
+                //             onChanged: onSearchChanged,
+                //             style: TextStyle(color: textColor),
+                //             decoration: InputDecoration(
+                //               hintText: 'Search address',
+                //               hintStyle: TextStyle(color: hintColor),
+                //               border: InputBorder.none,
+                //             ),
+                //           ),
+                //         ),
+                //       if (isSearching)
+                //         IconButton(
+                //           icon: Icon(Icons.clear, color: textColor),
+                //           onPressed: () {
+                //             searchController.clear();
+                //             setState(() => searchResults.clear());
+                //           },
+                //         ),
+                //     ],
+                //   ),
+                // ),
                 if (isSearching && searchResults.isNotEmpty) ...{
                   Container(
                     margin: const EdgeInsets.only(top: 4),
