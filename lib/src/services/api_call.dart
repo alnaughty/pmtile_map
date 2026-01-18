@@ -200,7 +200,7 @@ class TileMapGeoCodingService {
         'lon': coordinates?.longitude,
       };
 
-      return CoordinatedLocationResult.fromMap(e);
+      return CoordinatedLocationResult.fromMap(map);
     }).toList();
   }
 }
