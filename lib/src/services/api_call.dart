@@ -8,6 +8,7 @@ import 'package:google_polyline_algorithm/google_polyline_algorithm.dart'
 import 'package:http/http.dart' as http;
 import 'package:latlong2/latlong.dart' show LatLng;
 import 'package:pmtiles_map/pmtiles_map.dart';
+import 'package:pmtiles_map/src/models/coordinated_location_result.dart';
 
 class TileMapGeoCodingService {
   static Polygon _boundingBoxToPolygon(List<String> boundingBox) {
@@ -134,5 +135,72 @@ class TileMapGeoCodingService {
       color: color,
       strokeWidth: strokeWidth,
     );
+  }
+
+  static Future<List<CoordinatedLocationResult>> searchAddress(
+    String query, {
+    int limit = 10,
+  }) async {
+    if (query.isEmpty) return [];
+
+    final url = Uri.parse(
+      'https://nominatim.openstreetmap.org/search?q=$query&format=json&addressdetails=1&limit=$limit',
+    );
+
+    final response = await http.get(
+      url,
+      headers: {
+        'User-Agent': 'LumiereCoding/1.0', // Nominatim requires a User-Agent
+      },
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to search address');
+    }
+
+    final List data = json.decode(response.body);
+
+    return data.map((e) {
+      final addr = e['address'] ?? {};
+
+      // Extract coordinates
+      LatLong? coordinates;
+      if (e['lat'] != null && e['lon'] != null) {
+        coordinates = LatLong(
+          double.tryParse(e['lat'].toString()) ?? 0,
+          double.tryParse(e['lon'].toString()) ?? 0,
+        );
+      }
+
+      final map = {
+        'city':
+            addr['county'] ??
+            addr['city'] ??
+            addr['town'] ??
+            addr['residential'],
+        'barangay': (() {
+          final suburb = addr['suburb'];
+          final neighbourhood = addr['neighbourhood'];
+          if (suburb != null && neighbourhood != null)
+            return '$neighbourhood, $suburb';
+          return addr['village'] ??
+              addr['quarter'] ??
+              addr['hamlet'] ??
+              suburb ??
+              neighbourhood;
+        })(),
+        'province': addr['state'],
+        'address': e['display_name'],
+        'street': addr['road'],
+        'region': addr['region'],
+        'postalCode': addr['postcode'],
+        'country': addr['country'],
+        'countryCode': addr['country_code'],
+        'latitude': coordinates?.latitude,
+        'longitude': coordinates?.longitude,
+      };
+
+      return CoordinatedLocationResult.fromMap(map);
+    }).toList();
   }
 }

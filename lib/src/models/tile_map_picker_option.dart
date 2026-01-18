@@ -3,7 +3,7 @@ import 'package:flutter_map/flutter_map.dart';
 
 class TileMapPickerOption {
   final LatLong initialCenter;
-
+  final bool enableSearch;
   final double initialZoom;
   final List<Marker>? markers;
 
@@ -14,6 +14,7 @@ class TileMapPickerOption {
   TileMapPickerOption({
     LatLong? initialCenter,
     this.initialZoom = 16,
+    this.enableSearch = false,
     this.markers,
     this.polygons,
     this.onMapReady,

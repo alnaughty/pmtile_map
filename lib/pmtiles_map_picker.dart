@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map_animations/flutter_map_animations.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:pmtiles_map/pmtiles_map.dart';
+import 'package:pmtiles_map/src/models/coordinated_location_result.dart';
 import 'package:pmtiles_map/src/models/lat_long.dart' as pm;
 import 'package:pmtiles_map/src/pin_marker.dart';
 
@@ -33,6 +36,26 @@ class PmtilesMapPickerState extends State<PmtilesMapPicker>
 
   late AnimationController _animController;
   late Animation<double> _pinAnimation;
+  bool isSearching = false;
+  Timer? _debounce;
+  final TextEditingController searchController = TextEditingController();
+  List<CoordinatedLocationResult> searchResults = [];
+  void onSearchChanged(String query) {
+    if (_debounce?.isActive ?? false) _debounce!.cancel();
+    _debounce = Timer(const Duration(milliseconds: 500), () async {
+      if (query.isEmpty) {
+        setState(() => searchResults.clear());
+        return;
+      }
+
+      try {
+        final results = await TileMapGeoCodingService.searchAddress(query);
+        setState(() => searchResults = results);
+      } catch (_) {
+        setState(() => searchResults.clear());
+      }
+    });
+  }
 
   @override
   void initState() {
@@ -180,6 +203,110 @@ class PmtilesMapPickerState extends State<PmtilesMapPicker>
             );
           },
         ),
+        if (widget.options.enableSearch) ...{
+          Positioned(
+            top: 40,
+            left: 16,
+            right: 16,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeInOut,
+                  width: isSearching ? double.infinity : 50,
+                  height: 50,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(25),
+                    boxShadow: const [
+                      BoxShadow(
+                        blurRadius: 4,
+                        color: Colors.black26,
+                        offset: Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      IconButton(
+                        icon: Icon(
+                          isSearching ? Icons.search : Icons.search_outlined,
+                        ),
+                        onPressed: () {
+                          setState(() => isSearching = !isSearching);
+                          if (!isSearching) {
+                            searchController.clear();
+                            searchResults.clear();
+                          }
+                        },
+                      ),
+                      if (isSearching)
+                        Expanded(
+                          child: TextField(
+                            controller: searchController,
+                            onChanged: onSearchChanged,
+                            decoration: InputDecoration(
+                              hintText: 'Search address',
+                              border: InputBorder.none,
+                            ),
+                          ),
+                        ),
+                      if (isSearching)
+                        IconButton(
+                          icon: const Icon(Icons.clear),
+                          onPressed: () {
+                            searchController.clear();
+                            setState(() => searchResults.clear());
+                          },
+                        ),
+                    ],
+                  ),
+                ),
+                if (isSearching && searchResults.isNotEmpty)
+                  Container(
+                    margin: const EdgeInsets.only(top: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                      boxShadow: const [
+                        BoxShadow(
+                          blurRadius: 4,
+                          color: Colors.black26,
+                          offset: Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    constraints: const BoxConstraints(maxHeight: 200),
+                    child: ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: searchResults.length,
+                      itemBuilder: (context, index) {
+                        final result = searchResults[index];
+                        return ListTile(
+                          title: Text(result.address ?? 'Unknown'),
+                          subtitle: Text(
+                            [
+                              result.barangay,
+                              result.city,
+                              result.province,
+                            ].where((e) => e != null).join(', '),
+                          ),
+                          onTap: () async {
+                            searchController.text = result.address ?? '';
+                            searchResults.clear();
+                            setState(() {});
+                            await animateToCenter(result.coordinates!);
+                            setState(() => isSearching = false);
+                          },
+                        );
+                      },
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        },
       ],
     );
   }
