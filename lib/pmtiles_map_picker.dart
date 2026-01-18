@@ -99,6 +99,7 @@ class PmtilesMapPickerState extends State<PmtilesMapPicker>
     if (selectedLocation == location) return;
 
     final val = await TileMapGeoCodingService.reverseGeoCode(location);
+    print("DIDI SA animateToCenter");
     widget.callback(
       CoordinatedLocationResult.fromLocationResult(location, location: val),
     );
@@ -110,6 +111,7 @@ class PmtilesMapPickerState extends State<PmtilesMapPicker>
     if (selectedLocation == location) return;
 
     final val = await TileMapGeoCodingService.reverseGeoCode(location);
+    print("DD sa UPDATECENTER");
     widget.callback(
       CoordinatedLocationResult.fromLocationResult(location, location: val),
     );
