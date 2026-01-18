@@ -312,6 +312,7 @@ class PmtilesMapPickerState extends State<PmtilesMapPicker>
                             searchResults.clear();
                             setState(() {});
                             await animateToCenter(result.coordinates!);
+                            widget.callback(result, result.coordinates!);
                             setState(() => isSearching = false);
                           },
                         );
