@@ -68,8 +68,10 @@ class PmtilesMapPickerState extends State<PmtilesMapPicker>
 
       try {
         final results = await TileMapGeoCodingService.searchAddress(query);
+        isSearching = true;
         setState(() => searchResults = results);
       } catch (_) {
+        isSearching = false;
         setState(() => searchResults.clear());
       }
     });
@@ -135,6 +137,9 @@ class PmtilesMapPickerState extends State<PmtilesMapPicker>
     widget.callback(
       CoordinatedLocationResult.fromLocationResult(target, location: val),
     );
+    setState(() {
+      isSearching = false;
+    });
   }
 
   Timer? _debounceTimer;
@@ -355,7 +360,8 @@ class PmtilesMapPickerState extends State<PmtilesMapPicker>
                 //     ],
                 //   ),
                 // ),
-                if (widget.searchWidget != null &&
+                if (isSearching &&
+                    widget.searchWidget != null &&
                     searchResults.isNotEmpty) ...{
                   widget.searchResultBuilder?.call(
                         searchResults.map((r) => r).toList(),
