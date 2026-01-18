@@ -41,6 +41,7 @@ class CoordinatedLocationResult extends LocationResult {
         );
       } catch (_) {
         coords = null;
+        throw "Coordinates parse failed";
       }
     }
 
