@@ -191,8 +191,8 @@ class PmtilesMapPickerState extends State<PmtilesMapPicker>
             );
           },
           child: SizedBox(
-            height: 20,
-            width: 20,
+            height: widget.options.centerPinSize,
+            width: widget.options.centerPinSize,
             child: widget.centerPin ?? const FlatPinMarker(),
           ),
         ),

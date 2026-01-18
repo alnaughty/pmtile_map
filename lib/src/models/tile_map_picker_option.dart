@@ -6,13 +6,14 @@ class TileMapPickerOption {
   final bool enableSearch;
   final double initialZoom;
   final List<Marker>? markers;
-
+  final double centerPinSize;
   final List<Polygon>? polygons;
 
   final void Function(MapController mapController)? onMapReady;
 
   TileMapPickerOption({
     LatLong? initialCenter,
+    this.centerPinSize = 20,
     this.initialZoom = 16,
     this.enableSearch = false,
     this.markers,
