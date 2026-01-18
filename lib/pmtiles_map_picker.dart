@@ -205,7 +205,11 @@ class PmtilesMapPickerState extends State<PmtilesMapPicker>
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       gradient: RadialGradient(
-                        colors: [Colors.black45, Colors.transparent],
+                        colors: [
+                          Colors.white,
+                          Colors.black45,
+                          Colors.transparent,
+                        ],
                       ),
                     ),
                   ),
@@ -316,14 +320,15 @@ class PmtilesMapPickerState extends State<PmtilesMapPicker>
                           onTap: () async {
                             searchController.text = result.address ?? '';
                             searchResults.clear();
-                            setState(() {});
+
+                            setState(() => isSearching = false);
                             widget.callback(
                               CoordinatedLocationResult.fromLocationResult(
                                 result.coordinates!,
                                 location: result,
                               ),
                             );
-                            setState(() => isSearching = false);
+                            print("CALLING TAP");
                           },
                         );
                       },
