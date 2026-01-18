@@ -214,7 +214,7 @@ class PmtilesMapPickerState extends State<PmtilesMapPicker>
                 AnimatedContainer(
                   duration: const Duration(milliseconds: 300),
                   curve: Curves.easeInOut,
-                  width: isSearching ? double.infinity : 50,
+                  width: isSearching ? double.maxFinite : 50,
                   height: 50,
                   decoration: BoxDecoration(
                     color: Colors.white,
@@ -228,18 +228,21 @@ class PmtilesMapPickerState extends State<PmtilesMapPicker>
                     ],
                   ),
                   child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      IconButton(
-                        icon: Icon(
-                          isSearching ? Icons.search : Icons.search_outlined,
+                      Center(
+                        child: IconButton(
+                          icon: Icon(
+                            isSearching ? Icons.search : Icons.search_outlined,
+                          ),
+                          onPressed: () {
+                            setState(() => isSearching = !isSearching);
+                            if (!isSearching) {
+                              searchController.clear();
+                              searchResults.clear();
+                            }
+                          },
                         ),
-                        onPressed: () {
-                          setState(() => isSearching = !isSearching);
-                          if (!isSearching) {
-                            searchController.clear();
-                            searchResults.clear();
-                          }
-                        },
                       ),
                       if (isSearching)
                         Expanded(
