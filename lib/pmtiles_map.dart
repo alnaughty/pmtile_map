@@ -18,6 +18,7 @@ export 'package:pmtiles_map/src/models/drawline_on_point.dart';
 export 'package:pmtiles_map/pmtiles_map_picker.dart';
 export 'package:pmtiles_map/src/models/tile_map_picker_option.dart';
 export 'package:pmtiles_map/src/models/coordinated_location_result.dart';
+export 'package:pmtiles_map/src/new_pin_marker.dart';
 
 class PmtilesMap extends StatefulWidget {
   const PmtilesMap({
@@ -40,6 +41,7 @@ class PmtilesMapState extends State<PmtilesMap> with TickerProviderStateMixin {
   late final AnimatedMapController mapController;
   List<Polyline> polylines = [];
   List<Marker> polylineCenterMarkers = [];
+
   @override
   void initState() {
     WidgetsBinding.instance.addPostFrameCallback((v) async {
