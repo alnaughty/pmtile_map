@@ -95,13 +95,19 @@ class PmtilesMapPickerState extends State<PmtilesMapPicker>
       zoom: zoom ?? currentZoom,
       duration: mapController.duration,
     );
-    final location = pm.LatLong(target.latitude, target.longitude);
-    if (selectedLocation == location) return;
 
-    final val = await TileMapGeoCodingService.reverseGeoCode(location);
-    print("DIDI SA animateToCenter");
+    // Value-based check
+    if (selectedLocation != null &&
+        selectedLocation!.latitude == target.latitude &&
+        selectedLocation!.longitude == target.longitude) {
+      return;
+    }
+
+    selectedLocation = target; // update selected location
+
+    final val = await TileMapGeoCodingService.reverseGeoCode(target);
     widget.callback(
-      CoordinatedLocationResult.fromLocationResult(location, location: val),
+      CoordinatedLocationResult.fromLocationResult(target, location: val),
     );
   }
 
