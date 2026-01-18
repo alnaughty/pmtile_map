@@ -221,7 +221,9 @@ class PmtilesMapPickerState extends State<PmtilesMapPicker>
                 AnimatedContainer(
                   duration: const Duration(milliseconds: 300),
                   curve: Curves.easeInOut,
-                  width: isSearching ? double.infinity : 50,
+                  width: isSearching
+                      ? MediaQuery.sizeOf(context).width.clamp(100, 400)
+                      : 50,
                   height: 50,
                   decoration: BoxDecoration(
                     color: backgroundColor,
