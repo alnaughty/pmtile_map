@@ -15,6 +15,8 @@ typedef CenterAnimationBuilder =
 class PmtilesMapPicker extends StatefulWidget {
   final TileMapPickerOption options;
   final Widget? centerPin;
+  final Color pinColor;
+  final Gradient? pinGradient;
   final Function(CoordinatedLocationResult) callback;
   final pm.LatLong currentLocation;
   final CenterAnimationBuilder? centerAnimationBuilder;
@@ -22,6 +24,8 @@ class PmtilesMapPicker extends StatefulWidget {
     super.key,
     required this.callback,
     required this.options,
+    this.pinColor = Colors.red,
+    this.pinGradient,
     required this.currentLocation,
     this.centerAnimationBuilder,
     this.centerPin,
@@ -258,7 +262,11 @@ class PmtilesMapPickerState extends State<PmtilesMapPicker>
           child: SizedBox(
             height: widget.options.centerPinSize,
             width: widget.options.centerPinSize,
-            child: CustomMapMarker(centerWidget: _buildCenterPin()),
+            child: CustomMapMarker(
+              centerWidget: _buildCenterPin(),
+              color: widget.pinColor,
+              gradient: widget.pinGradient,
+            ),
           ),
         ),
         if (widget.options.enableSearch) ...{
