@@ -181,21 +181,7 @@ class PmtilesMapPickerState extends State<PmtilesMapPicker>
             ),
           ],
         ),
-        // Animated pin
-        AnimatedBuilder(
-          animation: _pinAnimation,
-          builder: (context, child) {
-            return Transform.translate(
-              offset: Offset(0, _pinAnimation.value),
-              child: child,
-            );
-          },
-          child: SizedBox(
-            height: widget.options.centerPinSize,
-            width: widget.options.centerPinSize,
-            child: widget.centerPin ?? const FlatPinMarker(),
-          ),
-        ),
+
         AnimatedBuilder(
           animation: _pinAnimation,
           builder: (context, child) {
@@ -209,7 +195,7 @@ class PmtilesMapPickerState extends State<PmtilesMapPicker>
               child: Transform.scale(
                 scale: scale.clamp(0.6, 1.0),
                 child: Opacity(
-                  opacity: scale.clamp(0.4, 1.0),
+                  opacity: scale.clamp(0.4, 1),
                   child: Container(
                     width: 20,
                     height: widget.options.centerPinSize / 2,
@@ -228,6 +214,21 @@ class PmtilesMapPickerState extends State<PmtilesMapPicker>
               ),
             );
           },
+        ),
+        // Animated pin
+        AnimatedBuilder(
+          animation: _pinAnimation,
+          builder: (context, child) {
+            return Transform.translate(
+              offset: Offset(0, _pinAnimation.value),
+              child: child,
+            );
+          },
+          child: SizedBox(
+            height: widget.options.centerPinSize,
+            width: widget.options.centerPinSize,
+            child: widget.centerPin ?? const FlatPinMarker(),
+          ),
         ),
         if (widget.options.enableSearch) ...{
           Positioned(
