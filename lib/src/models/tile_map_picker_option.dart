@@ -8,11 +8,13 @@ class TileMapPickerOption {
   final List<Marker>? markers;
   final double centerPinSize;
   final List<Polygon>? polygons;
+  final int pickDelay;
 
   final void Function(MapController mapController)? onMapReady;
 
   TileMapPickerOption({
     LatLong? initialCenter,
+    this.pickDelay = 800,
     this.centerPinSize = 20,
     this.initialZoom = 16,
     this.enableSearch = false,

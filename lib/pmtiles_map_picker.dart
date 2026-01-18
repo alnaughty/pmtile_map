@@ -69,7 +69,6 @@ class PmtilesMapPickerState extends State<PmtilesMapPicker>
     currentZoom = widget.options.initialZoom;
     selectedLocation = widget.options.initialCenter;
 
-    // Animation controller for the pin
     _animController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 150),
@@ -83,6 +82,8 @@ class PmtilesMapPickerState extends State<PmtilesMapPicker>
 
   @override
   void dispose() {
+    _debounce?.cancel();
+    _debounceTimer?.cancel();
     _animController.dispose();
     super.dispose();
   }
@@ -96,14 +97,13 @@ class PmtilesMapPickerState extends State<PmtilesMapPicker>
       duration: mapController.duration,
     );
 
-    // Value-based check
     if (selectedLocation != null &&
         selectedLocation!.latitude == target.latitude &&
         selectedLocation!.longitude == target.longitude) {
       return;
     }
 
-    selectedLocation = target; // update selected location
+    selectedLocation = target;
 
     final val = await TileMapGeoCodingService.reverseGeoCode(target);
     widget.callback(
@@ -111,24 +111,34 @@ class PmtilesMapPickerState extends State<PmtilesMapPicker>
     );
   }
 
-  Future<void> _updateCenterLocation() async {
-    final center = mapController.mapController.camera.center;
-    final location = pm.LatLong(center.latitude, center.longitude);
-    if (selectedLocation == location) return;
+  Timer? _debounceTimer;
 
-    final val = await TileMapGeoCodingService.reverseGeoCode(location);
-    print("DD sa UPDATECENTER");
-    widget.callback(
-      CoordinatedLocationResult.fromLocationResult(location, location: val),
+  Future<void> _updateCenterLocation() async {
+    _debounceTimer?.cancel();
+
+    _debounceTimer = Timer(
+      Duration(milliseconds: widget.options.pickDelay),
+      () async {
+        final center = mapController.mapController.camera.center;
+        final location = pm.LatLong(center.latitude, center.longitude);
+
+        if (selectedLocation == location) return;
+
+        final val = await TileMapGeoCodingService.reverseGeoCode(location);
+
+        widget.callback(
+          CoordinatedLocationResult.fromLocationResult(location, location: val),
+        );
+      },
     );
   }
 
   void _onPointerDown() {
-    _animController.forward(); // pin goes up
+    _animController.forward();
   }
 
   void _onPointerUp() async {
-    _animController.reverse(); // pin drops back
+    _animController.reverse();
     await _updateCenterLocation();
   }
 
@@ -185,20 +195,16 @@ class PmtilesMapPickerState extends State<PmtilesMapPicker>
         AnimatedBuilder(
           animation: _pinAnimation,
           builder: (context, child) {
-            // When the pin goes up, reduce shadow size & opacity
             final scale = 1 - (_pinAnimation.value.abs() / 60);
             return Transform.translate(
-              offset: Offset(
-                0,
-                widget.options.centerPinSize / 2,
-              ), // position shadow below pin
+              offset: Offset(0, widget.options.centerPinSize / 2),
               child: Transform.scale(
                 scale: scale.clamp(0.6, 1.0),
                 child: Opacity(
                   opacity: scale.clamp(0.4, 1),
                   child: Container(
                     width: 20,
-                    height: widget.options.centerPinSize / 2,
+                    height: 10,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       gradient: RadialGradient(
@@ -215,7 +221,7 @@ class PmtilesMapPickerState extends State<PmtilesMapPicker>
             );
           },
         ),
-        // Animated pin
+
         AnimatedBuilder(
           animation: _pinAnimation,
           builder: (context, child) {
@@ -333,7 +339,6 @@ class PmtilesMapPickerState extends State<PmtilesMapPicker>
                             await animateToCenter(result.coordinates);
                             searchController.text = result.address ?? '';
                             searchResults.clear();
-                            print("CALLING TAP");
                           },
                         );
                       },
