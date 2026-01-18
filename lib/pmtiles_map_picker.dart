@@ -5,22 +5,25 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map_animations/flutter_map_animations.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:pmtiles_map/pmtiles_map.dart';
-import 'package:pmtiles_map/src/models/coordinated_location_result.dart';
 import 'package:pmtiles_map/src/models/lat_long.dart' as pm;
+import 'package:pmtiles_map/src/new_pin_marker.dart';
 import 'package:pmtiles_map/src/pin_marker.dart';
 
-import 'package:pmtiles_map/src/services/api_call.dart';
+typedef CenterAnimationBuilder =
+    Widget Function(Widget child, double animationValue);
 
 class PmtilesMapPicker extends StatefulWidget {
   final TileMapPickerOption options;
   final Widget? centerPin;
   final Function(CoordinatedLocationResult) callback;
   final pm.LatLong currentLocation;
+  final CenterAnimationBuilder? centerAnimationBuilder;
   const PmtilesMapPicker({
     super.key,
     required this.callback,
     required this.options,
     required this.currentLocation,
+    this.centerAnimationBuilder,
     this.centerPin,
   });
 
@@ -36,6 +39,8 @@ class PmtilesMapPickerState extends State<PmtilesMapPicker>
 
   late AnimationController _animController;
   late Animation<double> _pinAnimation;
+  late final Animation<double> _centerAnimation;
+  late final AnimationController _centerController;
   bool isSearching = false;
   Timer? _debounce;
   final TextEditingController searchController = TextEditingController();
@@ -68,7 +73,14 @@ class PmtilesMapPickerState extends State<PmtilesMapPicker>
     );
     currentZoom = widget.options.initialZoom;
     selectedLocation = widget.options.initialCenter;
-
+    _centerController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
+    _centerAnimation = CurvedAnimation(
+      parent: _centerController,
+      curve: Curves.easeOut,
+    );
     _animController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 150),
@@ -134,11 +146,18 @@ class PmtilesMapPickerState extends State<PmtilesMapPicker>
   }
 
   void _onPointerDown() {
+    if (widget.centerAnimationBuilder != null) {
+      _centerController.repeat();
+    }
     _animController.forward();
   }
 
   void _onPointerUp() async {
     _animController.reverse();
+    if (widget.centerAnimationBuilder != null) {
+      _centerController.stop();
+      _centerController.reset();
+    }
     await _updateCenterLocation();
   }
 
@@ -233,7 +252,7 @@ class PmtilesMapPickerState extends State<PmtilesMapPicker>
           child: SizedBox(
             height: widget.options.centerPinSize,
             width: widget.options.centerPinSize,
-            child: widget.centerPin ?? const FlatPinMarker(),
+            child: CustomMapMarker(centerWidget: _buildCenterPin()),
           ),
         ),
         if (widget.options.enableSearch) ...{
@@ -350,6 +369,29 @@ class PmtilesMapPickerState extends State<PmtilesMapPicker>
           ),
         },
       ],
+    );
+  }
+
+  Widget _buildCenterPin() {
+    final child =
+        widget.centerPin ??
+        Container(
+          width: widget.options.centerPinSize / 4,
+          height: widget.options.centerPinSize / 4,
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            shape: BoxShape.circle,
+          ),
+        );
+
+    final builder = widget.centerAnimationBuilder;
+    if (builder == null) return child;
+
+    return AnimatedBuilder(
+      animation: _centerAnimation,
+      builder: (_, _) {
+        return builder(child, _centerAnimation.value);
+      },
     );
   }
 }
