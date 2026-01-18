@@ -326,16 +326,13 @@ class PmtilesMapPickerState extends State<PmtilesMapPicker>
                             style: TextStyle(color: textColor.withOpacity(0.7)),
                           ),
                           onTap: () async {
+                            if (result.coordinates == null) {
+                              print("NO COORDINATES FOUND!");
+                              return;
+                            }
+                            await animateToCenter(result.coordinates!);
                             searchController.text = result.address ?? '';
                             searchResults.clear();
-
-                            setState(() => isSearching = false);
-                            widget.callback(
-                              CoordinatedLocationResult.fromLocationResult(
-                                result.coordinates!,
-                                location: result,
-                              ),
-                            );
                             print("CALLING TAP");
                           },
                         );
