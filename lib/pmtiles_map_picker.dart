@@ -14,7 +14,7 @@ import 'package:pmtiles_map/src/services/api_call.dart';
 class PmtilesMapPicker extends StatefulWidget {
   final TileMapPickerOption options;
   final Widget? centerPin;
-  final Function(LocationResult, pm.LatLong) callback;
+  final Function(CoordinatedLocationResult) callback;
   final pm.LatLong currentLocation;
   const PmtilesMapPicker({
     super.key,
@@ -99,7 +99,9 @@ class PmtilesMapPickerState extends State<PmtilesMapPicker>
     if (selectedLocation == location) return;
 
     final val = await TileMapGeoCodingService.reverseGeoCode(location);
-    widget.callback(val, location);
+    widget.callback(
+      CoordinatedLocationResult.fromLocationResult(location, location: val),
+    );
   }
 
   Future<void> _updateCenterLocation() async {
@@ -108,7 +110,9 @@ class PmtilesMapPickerState extends State<PmtilesMapPicker>
     if (selectedLocation == location) return;
 
     final val = await TileMapGeoCodingService.reverseGeoCode(location);
-    widget.callback(val, location);
+    widget.callback(
+      CoordinatedLocationResult.fromLocationResult(location, location: val),
+    );
   }
 
   void _onPointerDown() {
@@ -276,7 +280,7 @@ class PmtilesMapPickerState extends State<PmtilesMapPicker>
                   ),
                 ),
 
-                if (isSearching && searchResults.isNotEmpty)
+                if (isSearching && searchResults.isNotEmpty) ...{
                   Container(
                     margin: const EdgeInsets.only(top: 4),
                     decoration: BoxDecoration(
@@ -313,14 +317,19 @@ class PmtilesMapPickerState extends State<PmtilesMapPicker>
                             searchController.text = result.address ?? '';
                             searchResults.clear();
                             setState(() {});
-                            await animateToCenter(result.coordinates!);
-                            widget.callback(result, result.coordinates!);
+                            widget.callback(
+                              CoordinatedLocationResult.fromLocationResult(
+                                result.coordinates!,
+                                location: result,
+                              ),
+                            );
                             setState(() => isSearching = false);
                           },
                         );
                       },
                     ),
                   ),
+                },
               ],
             ),
           ),

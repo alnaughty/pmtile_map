@@ -1,3 +1,6 @@
+import 'package:pmtiles_map/pmtiles_map.dart';
+import 'package:pmtiles_map/src/models/coordinated_location_result.dart';
+
 class LocationResult {
   final String? city;
   final String? barangay;
