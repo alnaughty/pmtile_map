@@ -57,6 +57,19 @@ class CoordinatedLocationResult extends LocationResult {
       countryCode: map['countryCode'] as String?,
     );
   }
+  LocationResult toLocationResult() {
+    return LocationResult(
+      city: city,
+      barangay: barangay,
+      province: province,
+      address: address,
+      street: street,
+      region: region,
+      postalCode: postalCode,
+      country: country,
+      countryCode: countryCode,
+    );
+  }
 
   factory CoordinatedLocationResult.fromJson(Map<String, dynamic> json) =>
       CoordinatedLocationResult.fromMap(json);

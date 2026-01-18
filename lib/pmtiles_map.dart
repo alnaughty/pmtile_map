@@ -17,6 +17,7 @@ export 'package:flutter_map/src/layer/polyline_layer/polyline_layer.dart';
 export 'package:pmtiles_map/src/models/drawline_on_point.dart';
 export 'package:pmtiles_map/pmtiles_map_picker.dart';
 export 'package:pmtiles_map/src/models/tile_map_picker_option.dart';
+export 'package:pmtiles_map/src/models/coordinated_location_result.dart';
 
 class PmtilesMap extends StatefulWidget {
   const PmtilesMap({
