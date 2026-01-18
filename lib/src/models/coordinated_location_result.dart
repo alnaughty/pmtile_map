@@ -1,9 +1,9 @@
 import 'package:pmtiles_map/pmtiles_map.dart';
 
 class CoordinatedLocationResult extends LocationResult {
-  final LatLong? coordinates;
+  final LatLong coordinates;
   CoordinatedLocationResult({
-    this.coordinates,
+    required this.coordinates,
     super.city,
     super.barangay,
     super.province,
@@ -44,6 +44,9 @@ class CoordinatedLocationResult extends LocationResult {
         throw "Coordinates parse failed";
       }
     }
+    if (coords == null) {
+      throw "NO COORDINATES FOUND!";
+    }
 
     return CoordinatedLocationResult(
       coordinates: coords,
@@ -77,12 +80,10 @@ class CoordinatedLocationResult extends LocationResult {
   @override
   Map<String, dynamic> toMap() {
     final map = super.toMap();
-    if (coordinates != null) {
-      map.addAll({
-        'latitude': coordinates!.latitude,
-        'longitude': coordinates!.longitude,
-      });
-    }
+    map.addAll({
+      'latitude': coordinates.latitude,
+      'longitude': coordinates.longitude,
+    });
     return map;
   }
 }
