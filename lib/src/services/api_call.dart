@@ -160,6 +160,46 @@ class TileMapGeoCodingService {
     final List data = json.decode(response.body);
 
     return data.map((e) {
+      final addr = e['address'] ?? {};
+
+      // Extract coordinates
+      LatLong? coordinates;
+      if (e['lat'] != null && e['lon'] != null) {
+        coordinates = LatLong(
+          double.tryParse(e['lat'].toString()) ?? 0,
+          double.tryParse(e['lon'].toString()) ?? 0,
+        );
+      }
+
+      final map = {
+        'city':
+            addr['county'] ??
+            addr['city'] ??
+            addr['town'] ??
+            addr['residential'],
+        'barangay': (() {
+          final suburb = addr['suburb'];
+          final neighbourhood = addr['neighbourhood'];
+          if (suburb != null && neighbourhood != null) {
+            return '$neighbourhood, $suburb';
+          }
+          return addr['village'] ??
+              addr['quarter'] ??
+              addr['hamlet'] ??
+              suburb ??
+              neighbourhood;
+        })(),
+        'province': addr['state'],
+        'address': e['display_name'],
+        'street': addr['road'],
+        'region': addr['region'],
+        'postalCode': addr['postcode'],
+        'country': addr['country'],
+        'countryCode': addr['country_code'],
+        'lat': coordinates?.latitude,
+        'lon': coordinates?.longitude,
+      };
+
       return CoordinatedLocationResult.fromMap(e);
     }).toList();
   }

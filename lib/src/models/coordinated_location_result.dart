@@ -32,21 +32,11 @@ class CoordinatedLocationResult extends LocationResult {
     );
   }
   factory CoordinatedLocationResult.fromMap(Map<String, dynamic> map) {
-    LatLong? coords;
-    if (map.containsKey('lat') && map.containsKey('lon')) {
-      try {
-        coords = LatLong(
-          double.parse(map['lat'] as String),
-          double.parse(map['lon'] as String),
-        );
-      } catch (_) {
-        coords = null;
-        throw "Coordinates parse failed";
-      }
-    }
-    if (coords == null) {
-      throw "NO COORDINATES FOUND!";
-    }
+    print("LAT : ${map['lat'].toString()}, LONG : ${map['lon'].toString()}");
+    LatLong coords = LatLong(
+      double.parse(map['lat'].toString()),
+      double.parse(map['lon'].toString()),
+    );
 
     return CoordinatedLocationResult(
       coordinates: coords,
