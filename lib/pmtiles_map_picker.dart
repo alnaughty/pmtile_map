@@ -19,7 +19,8 @@ class PmtilesMapPicker extends StatefulWidget {
   final Widget? searchWidget;
   final Widget? currentLocationWidget;
   final Gradient? pinGradient;
-  final Widget Function(List<String> searchResults)? searchResultBuilder;
+  final Widget Function(List<CoordinatedLocationResult> searchResults)?
+  searchResultBuilder;
 
   final Function(CoordinatedLocationResult) callback;
   final pm.LatLong currentLocation;
@@ -357,7 +358,7 @@ class PmtilesMapPickerState extends State<PmtilesMapPicker>
                 if (widget.searchWidget != null &&
                     searchResults.isNotEmpty) ...{
                   widget.searchResultBuilder?.call(
-                        searchResults.map((r) => r.address ?? '').toList(),
+                        searchResults.map((r) => r).toList(),
                       ) ??
                       Container(
                         margin: const EdgeInsets.only(top: 4),
