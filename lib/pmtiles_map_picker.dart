@@ -202,14 +202,17 @@ class PmtilesMapPickerState extends State<PmtilesMapPicker>
             // When the pin goes up, reduce shadow size & opacity
             final scale = 1 - (_pinAnimation.value.abs() / 60);
             return Transform.translate(
-              offset: Offset(0, 10), // position shadow below pin
+              offset: Offset(
+                0,
+                widget.options.centerPinSize,
+              ), // position shadow below pin
               child: Transform.scale(
                 scale: scale.clamp(0.6, 1.0),
                 child: Opacity(
                   opacity: scale.clamp(0.4, 1.0),
                   child: Container(
                     width: 20,
-                    height: 10,
+                    height: widget.options.centerPinSize,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       gradient: RadialGradient(
