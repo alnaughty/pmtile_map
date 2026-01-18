@@ -19,11 +19,15 @@ class PmtilesMapPicker extends StatefulWidget {
   final Widget? searchWidget;
   final Widget? currentLocationWidget;
   final Gradient? pinGradient;
+  final Widget Function(List<String> searchResults)? searchResultBuilder;
+
   final Function(CoordinatedLocationResult) callback;
   final pm.LatLong currentLocation;
+
   final CenterAnimationBuilder? centerAnimationBuilder;
   const PmtilesMapPicker({
     super.key,
+    this.searchResultBuilder,
     required this.callback,
     this.currentLocationWidget,
     this.searchWidget,
@@ -350,48 +354,54 @@ class PmtilesMapPickerState extends State<PmtilesMapPicker>
                 //     ],
                 //   ),
                 // ),
-                if (isSearching && searchResults.isNotEmpty) ...{
-                  Container(
-                    margin: const EdgeInsets.only(top: 4),
-                    decoration: BoxDecoration(
-                      color: backgroundColor,
-                      borderRadius: BorderRadius.circular(8),
-                      boxShadow: [
-                        BoxShadow(
-                          blurRadius: 4,
-                          color: shadowColor,
-                          offset: const Offset(0, 2),
+                if (widget.searchWidget != null &&
+                    searchResults.isNotEmpty) ...{
+                  widget.searchResultBuilder?.call(
+                        searchResults.map((r) => r.address ?? '').toList(),
+                      ) ??
+                      Container(
+                        margin: const EdgeInsets.only(top: 4),
+                        decoration: BoxDecoration(
+                          color: backgroundColor,
+                          borderRadius: BorderRadius.circular(8),
+                          boxShadow: [
+                            BoxShadow(
+                              blurRadius: 4,
+                              color: shadowColor,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                    constraints: const BoxConstraints(maxHeight: 200),
-                    child: ListView.builder(
-                      shrinkWrap: true,
-                      itemCount: searchResults.length,
-                      itemBuilder: (context, index) {
-                        final result = searchResults[index];
-                        return ListTile(
-                          title: Text(
-                            result.address ?? 'Unknown',
-                            style: TextStyle(color: textColor),
-                          ),
-                          subtitle: Text(
-                            [
-                              result.barangay,
-                              result.city,
-                              result.province,
-                            ].where((e) => e != null).join(', '),
-                            style: TextStyle(color: textColor.withOpacity(0.7)),
-                          ),
-                          onTap: () async {
-                            await animateToCenter(result.coordinates);
-                            searchController.text = result.address ?? '';
-                            searchResults.clear();
+                        constraints: const BoxConstraints(maxHeight: 200),
+                        child: ListView.builder(
+                          shrinkWrap: true,
+                          itemCount: searchResults.length,
+                          itemBuilder: (context, index) {
+                            final result = searchResults[index];
+                            return ListTile(
+                              title: Text(
+                                result.address ?? 'Unknown',
+                                style: TextStyle(color: textColor),
+                              ),
+                              subtitle: Text(
+                                [
+                                  result.barangay,
+                                  result.city,
+                                  result.province,
+                                ].where((e) => e != null).join(', '),
+                                style: TextStyle(
+                                  color: textColor.withOpacity(0.7),
+                                ),
+                              ),
+                              onTap: () async {
+                                await animateToCenter(result.coordinates);
+                                searchController.text = result.address ?? '';
+                                searchResults.clear();
+                              },
+                            );
                           },
-                        );
-                      },
-                    ),
-                  ),
+                        ),
+                      ),
                 },
               ],
             ),
