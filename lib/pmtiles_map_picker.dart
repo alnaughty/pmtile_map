@@ -77,10 +77,11 @@ class PmtilesMapPickerState extends State<PmtilesMapPicker>
       vsync: this,
       duration: const Duration(milliseconds: 300),
     );
-    _centerAnimation = CurvedAnimation(
-      parent: _centerController,
-      curve: Curves.easeOut,
-    );
+    _centerAnimation = Tween<double>(
+      begin: 0,
+      end: 1,
+    ).animate(_centerController);
+
     _animController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 150),
@@ -146,10 +147,15 @@ class PmtilesMapPickerState extends State<PmtilesMapPicker>
   }
 
   void _onPointerDown() {
-    if (widget.centerAnimationBuilder != null) {
-      _centerController.repeat();
-    }
     _animController.forward();
+    if (widget.centerAnimationBuilder != null) {
+      _centerController.repeat(
+        min: 0,
+        max: 1,
+        period: const Duration(seconds: 1),
+        reverse: false,
+      );
+    }
   }
 
   void _onPointerUp() async {
