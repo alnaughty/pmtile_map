@@ -122,6 +122,13 @@ class PmtilesMapPickerState extends State<PmtilesMapPicker>
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final backgroundColor = isDark ? Colors.grey[850]! : Colors.white;
+    final textColor = isDark ? Colors.white : Colors.black87;
+    final hintColor = isDark ? Colors.white54 : Colors.black45;
+    final shadowColor = isDark ? Colors.black54 : Colors.black26;
+
     return Stack(
       alignment: Alignment.center,
       children: [
@@ -214,50 +221,50 @@ class PmtilesMapPickerState extends State<PmtilesMapPicker>
                 AnimatedContainer(
                   duration: const Duration(milliseconds: 300),
                   curve: Curves.easeInOut,
-                  width: isSearching ? double.maxFinite : 50,
+                  width: isSearching ? double.infinity : 50,
                   height: 50,
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: backgroundColor,
                     borderRadius: BorderRadius.circular(25),
-                    boxShadow: const [
+                    boxShadow: [
                       BoxShadow(
                         blurRadius: 4,
-                        color: Colors.black26,
-                        offset: Offset(0, 2),
+                        color: shadowColor,
+                        offset: const Offset(0, 2),
                       ),
                     ],
                   ),
                   child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Center(
-                        child: IconButton(
-                          icon: Icon(
-                            isSearching ? Icons.search : Icons.search_outlined,
-                          ),
-                          onPressed: () {
-                            setState(() => isSearching = !isSearching);
-                            if (!isSearching) {
-                              searchController.clear();
-                              searchResults.clear();
-                            }
-                          },
+                      IconButton(
+                        icon: Icon(
+                          isSearching ? Icons.search : Icons.search_outlined,
+                          color: textColor,
                         ),
+                        onPressed: () {
+                          setState(() => isSearching = !isSearching);
+                          if (!isSearching) {
+                            searchController.clear();
+                            searchResults.clear();
+                          }
+                        },
                       ),
                       if (isSearching)
                         Expanded(
                           child: TextField(
                             controller: searchController,
                             onChanged: onSearchChanged,
+                            style: TextStyle(color: textColor),
                             decoration: InputDecoration(
                               hintText: 'Search address',
+                              hintStyle: TextStyle(color: hintColor),
                               border: InputBorder.none,
                             ),
                           ),
                         ),
                       if (isSearching)
                         IconButton(
-                          icon: const Icon(Icons.clear),
+                          icon: Icon(Icons.clear, color: textColor),
                           onPressed: () {
                             searchController.clear();
                             setState(() => searchResults.clear());
@@ -266,17 +273,18 @@ class PmtilesMapPickerState extends State<PmtilesMapPicker>
                     ],
                   ),
                 ),
+
                 if (isSearching && searchResults.isNotEmpty)
                   Container(
                     margin: const EdgeInsets.only(top: 4),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: backgroundColor,
                       borderRadius: BorderRadius.circular(8),
-                      boxShadow: const [
+                      boxShadow: [
                         BoxShadow(
                           blurRadius: 4,
-                          color: Colors.black26,
-                          offset: Offset(0, 2),
+                          color: shadowColor,
+                          offset: const Offset(0, 2),
                         ),
                       ],
                     ),
@@ -287,13 +295,17 @@ class PmtilesMapPickerState extends State<PmtilesMapPicker>
                       itemBuilder: (context, index) {
                         final result = searchResults[index];
                         return ListTile(
-                          title: Text(result.address ?? 'Unknown'),
+                          title: Text(
+                            result.address ?? 'Unknown',
+                            style: TextStyle(color: textColor),
+                          ),
                           subtitle: Text(
                             [
                               result.barangay,
                               result.city,
                               result.province,
                             ].where((e) => e != null).join(', '),
+                            style: TextStyle(color: textColor.withOpacity(0.7)),
                           ),
                           onTap: () async {
                             searchController.text = result.address ?? '';
