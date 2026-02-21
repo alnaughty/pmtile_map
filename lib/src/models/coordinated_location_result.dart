@@ -32,11 +32,9 @@ class CoordinatedLocationResult extends LocationResult {
     );
   }
   factory CoordinatedLocationResult.fromMap(Map<String, dynamic> map) {
-    print("LAT : ${map['lat'].toString()}, LONG : ${map['lon'].toString()}");
-    LatLong coords = LatLong(
-      double.parse(map['lat'].toString()),
-      double.parse(map['lon'].toString()),
-    );
+    final lat = double.tryParse(map['lat']?.toString() ?? '') ?? 0.0;
+    final lon = double.tryParse(map['lon']?.toString() ?? '') ?? 0.0;
+    LatLong coords = LatLong(lat, lon);
 
     return CoordinatedLocationResult(
       coordinates: coords,

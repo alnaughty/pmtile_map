@@ -1,17 +1,23 @@
-import 'dart:math' show cos, pow;
-
+import 'dart:math' as math;
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
-import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_map/flutter_map.dart' as fm;
 import 'package:flutter_map_animations/flutter_map_animations.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:pmtiles_map/src/models/drawline_on_point.dart';
 import 'package:pmtiles_map/src/models/tile_map_option.dart';
-export 'package:pmtiles_map/src/models/lat_long.dart';
 import 'package:pmtiles_map/src/models/lat_long.dart' as pm;
 import 'package:pmtiles_map/src/pin_marker.dart';
+import 'package:pmtiles_map/src/services/api_call.dart';
+import 'package:flutter_map_cancellable_tile_provider/flutter_map_cancellable_tile_provider.dart';
+import 'package:flutter_map_location_marker/flutter_map_location_marker.dart';
+import 'package:maplibre_gl/maplibre_gl.dart' as gl;
+
+export 'package:pmtiles_map/src/models/lat_long.dart';
 export 'package:pmtiles_map/src/models/tile_map_option.dart';
 export 'package:pmtiles_map/src/models/location_result.dart';
-import 'package:pmtiles_map/src/services/api_call.dart';
 export 'package:pmtiles_map/src/services/api_call.dart';
 export 'package:flutter_map/src/layer/polyline_layer/polyline_layer.dart';
 export 'package:pmtiles_map/src/models/drawline_on_point.dart';
@@ -29,7 +35,7 @@ class PmtilesMap extends StatefulWidget {
   });
   final TileMapOption options;
   final List<PmTileMapMarker>? markers;
-  final List<Polygon>? polygons;
+  final List<fm.Polygon>? polygons;
 
   @override
   State<PmtilesMap> createState() => PmtilesMapState();
@@ -39,8 +45,20 @@ class PmtilesMapState extends State<PmtilesMap> with TickerProviderStateMixin {
   late final opts = widget.options;
   late double currentZoom = opts.initialZoom;
   late final AnimatedMapController mapController;
-  List<Polyline> polylines = [];
-  List<Marker> polylineCenterMarkers = [];
+  gl.MapLibreMapController? glController;
+
+  // Fixed 3D style URL - computed once at init.
+  late final String _styleUrl =
+      widget.options.styleUrl ?? "https://tiles.openfreemap.org/styles/liberty";
+
+  List<fm.Polyline> polylines = [];
+  List<fm.Marker> polylineCenterMarkers = [];
+
+  bool get is3DSupported {
+    if (kIsWeb) return true;
+    return defaultTargetPlatform == TargetPlatform.android ||
+        defaultTargetPlatform == TargetPlatform.iOS;
+  }
 
   @override
   void initState() {
@@ -48,6 +66,7 @@ class PmtilesMapState extends State<PmtilesMap> with TickerProviderStateMixin {
       await _generatePolylines();
     });
     super.initState();
+    currentZoom = widget.options.initialZoom;
     mapController = AnimatedMapController(
       vsync: this,
       duration: const Duration(milliseconds: 800),
@@ -62,14 +81,74 @@ class PmtilesMapState extends State<PmtilesMap> with TickerProviderStateMixin {
     mapController.dispose();
   }
 
-  Future<void> animateToCenter(pm.LatLong target, {double? zoom}) async {
-    final LatLng dest = LatLng(target.latitude, target.longitude);
+  @override
+  void didUpdateWidget(PmtilesMap oldWidget) {
+    super.didUpdateWidget(oldWidget);
+  }
 
+  Future<void> animateToCenter(pm.LatLong target, {double? zoom}) async {
+    if (widget.options.use3D && is3DSupported && glController != null) {
+      await glController!.animateCamera(
+        gl.CameraUpdate.newLatLngZoom(
+          gl.LatLng(target.latitude, target.longitude),
+          zoom ?? currentZoom,
+        ),
+      );
+      return;
+    }
+
+    final LatLng dest = LatLng(target.latitude, target.longitude);
     await mapController.animateTo(
       dest: dest,
       zoom: zoom ?? currentZoom,
       duration: mapController.duration,
     );
+  }
+
+  Future<void> fitBounds(
+    fm.LatLngBounds bounds, {
+    double padding = 12.0,
+  }) async {
+    if (widget.options.use3D && is3DSupported && glController != null) {
+      await glController!.animateCamera(
+        gl.CameraUpdate.newLatLngBounds(
+          gl.LatLngBounds(
+            southwest: gl.LatLng(
+              bounds.southWest.latitude,
+              bounds.southWest.longitude,
+            ),
+            northeast: gl.LatLng(
+              bounds.northEast.latitude,
+              bounds.northEast.longitude,
+            ),
+          ),
+          left: padding,
+          top: padding,
+          right: padding,
+          bottom: padding,
+        ),
+      );
+      return;
+    }
+
+    await mapController.animatedFitCamera(
+      cameraFit: fm.CameraFit.bounds(
+        bounds: bounds,
+        padding: EdgeInsets.all(padding),
+      ),
+      duration: mapController.duration,
+      curve: Curves.easeInOutCirc,
+    );
+  }
+
+  Future<void> fitPoints(
+    List<pm.LatLong> points, {
+    double padding = 12.0,
+  }) async {
+    if (points.isEmpty) return;
+    final latLngs = points.map((p) => LatLng(p.latitude, p.longitude)).toList();
+    final bounds = fm.LatLngBounds.fromPoints(latLngs);
+    await fitBounds(bounds, padding: padding);
   }
 
   Future<void> _generatePolylines() async {
@@ -85,11 +164,8 @@ class PmtilesMapState extends State<PmtilesMap> with TickerProviderStateMixin {
 
       if (line != null) {
         polylines.add(line);
-
-        // --- NEW: center marker ---
-        final center = getPolylineCenter(line.points);
         polylineCenterMarkers.addAll([
-          Marker(
+          fm.Marker(
             point: LatLng(point.start.latitude, point.start.longitude),
             alignment: Alignment.topCenter,
             child: Tooltip(
@@ -97,7 +173,7 @@ class PmtilesMapState extends State<PmtilesMap> with TickerProviderStateMixin {
               child: point.startMarker ?? FlatPinMarker(),
             ),
           ),
-          Marker(
+          fm.Marker(
             point: LatLng(point.end.latitude, point.end.longitude),
             alignment: Alignment.topCenter,
             child: Tooltip(
@@ -106,7 +182,6 @@ class PmtilesMapState extends State<PmtilesMap> with TickerProviderStateMixin {
             ),
           ),
         ]);
-
         if (mounted) setState(() {});
       }
     }
@@ -114,9 +189,13 @@ class PmtilesMapState extends State<PmtilesMap> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    return FlutterMap(
+    if (widget.options.use3D && is3DSupported) {
+      return _build3DMap(context);
+    }
+
+    final map = fm.FlutterMap(
       mapController: mapController.mapController,
-      options: MapOptions(
+      options: fm.MapOptions(
         initialCenter: LatLng(
           widget.options.initialCenter.latitude,
           widget.options.initialCenter.longitude,
@@ -140,39 +219,22 @@ class PmtilesMapState extends State<PmtilesMap> with TickerProviderStateMixin {
             );
           }
         },
-        onSecondaryTap: opts.onSecondaryTap == null
-            ? null
-            : (tapPos, latlng) {
-                opts.onSecondaryTap!(
-                  pm.LatLong(latlng.latitude, latlng.longitude),
-                );
-              },
-        onLongPress: opts.onLongPress == null
-            ? null
-            : (tapPos, latlng) {
-                opts.onLongPress!(
-                  pm.LatLong(latlng.latitude, latlng.longitude),
-                );
-              },
         onMapReady: opts.onMapReady,
         keepAlive: opts.keepAlive,
-        onPositionChanged: (MapCamera position, bool _) {
+        onPositionChanged: (fm.MapCamera position, bool _) {
           setState(() {
             currentZoom = position.zoom;
           });
         },
       ),
       children: [
-        TileLayer(
-          urlTemplate: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-          subdomains: ['a', 'b', 'c'],
-        ),
-        PolylineLayer(polylines: polylines),
-
-        CircleLayer(
+        _buildTileLayer(context),
+        if (widget.options.showUserLocation) const CurrentLocationLayer(),
+        fm.PolylineLayer(polylines: polylines),
+        fm.CircleLayer(
           circles: widget.options.fenceRadius
               .map(
-                (fence) => CircleMarker(
+                (fence) => fm.CircleMarker(
                   borderStrokeWidth: fence.borderWidth,
                   borderColor: fence.color,
                   color: fence.color.withOpacity(.2),
@@ -186,18 +248,24 @@ class PmtilesMapState extends State<PmtilesMap> with TickerProviderStateMixin {
               )
               .toList(),
         ),
-        MarkerLayer(markers: polylineCenterMarkers),
-        if (widget.polygons != null) PolygonLayer(polygons: widget.polygons!),
+        fm.MarkerLayer(markers: polylineCenterMarkers),
+        if (widget.polygons != null)
+          fm.PolygonLayer(polygons: widget.polygons!),
         if (widget.markers != null)
-          MarkerLayer(
+          fm.MarkerLayer(
             markers: (widget.markers ?? [])
                 .map(
-                  (marker) => Marker(
+                  (marker) => fm.Marker(
                     point: LatLng(
                       marker.coordinates.latitude,
                       marker.coordinates.longitude,
                     ),
-                    child: marker.child,
+                    child: marker.onTap != null
+                        ? GestureDetector(
+                            onTap: marker.onTap,
+                            child: marker.child,
+                          )
+                        : marker.child,
                     height: marker.height,
                     width: marker.width,
                     alignment: marker.alignment,
@@ -206,38 +274,172 @@ class PmtilesMapState extends State<PmtilesMap> with TickerProviderStateMixin {
                 )
                 .toList(),
           ),
+        // if (widget.options.showScaleBar)
+        //   const fm.SimpleAttributionWidget(
+        //     source: Text('© OpenStreetMap contributors'),
+        //   ),
       ],
+    );
+
+    if (widget.options.showZoomControls) {
+      return Stack(
+        children: [
+          map,
+          Positioned(
+            right: 16,
+            bottom: 16,
+            child: Column(
+              children: [
+                FloatingActionButton(
+                  heroTag: 'zoom_in',
+                  mini: true,
+                  onPressed: () {
+                    mapController.animateTo(
+                      zoom: currentZoom + 1,
+                      duration: const Duration(milliseconds: 300),
+                    );
+                  },
+                  child: const Icon(Icons.add),
+                ),
+                const SizedBox(height: 8),
+                FloatingActionButton(
+                  heroTag: 'zoom_out',
+                  mini: true,
+                  onPressed: () {
+                    mapController.animateTo(
+                      zoom: currentZoom - 1,
+                      duration: const Duration(milliseconds: 300),
+                    );
+                  },
+                  child: const Icon(Icons.remove),
+                ),
+              ],
+            ),
+          ),
+        ],
+      );
+    }
+    return map;
+  }
+
+  Widget _build3DMap(BuildContext context) {
+    return gl.MapLibreMap(
+      initialCameraPosition: gl.CameraPosition(
+        target: gl.LatLng(
+          widget.options.initialCenter.latitude,
+          widget.options.initialCenter.longitude,
+        ),
+        zoom: widget.options.initialZoom,
+        tilt: widget.options.initialTilt,
+      ),
+      styleString: _styleUrl,
+      onMapCreated: (controller) async {
+        glController = controller;
+        await _registerMapIcons();
+        if (widget.options.onMapReady != null) widget.options.onMapReady!();
+      },
+      myLocationEnabled: false,
+      trackCameraPosition: true,
+      onCameraMove: (pos) {
+        currentZoom = pos.zoom;
+      },
     );
   }
 
+  Future<void> _registerMapIcons() async {
+    if (glController == null) return;
+    final List<String> icons = [
+      'atm.png',
+      'ferry_terminal.png',
+      'gate.png',
+      'office.png',
+      'pin.png',
+      'recycling.png',
+    ];
+
+    for (final icon in icons) {
+      final String name = icon.split('.').first;
+      // In Flutter Web, package assets are prefixed with 'packages/package_name/'.
+      final String assetPath = 'packages/pmtiles_map/assets/$icon';
+      try {
+        final ByteData bytes = await rootBundle.load(assetPath);
+        final Uint8List list = bytes.buffer.asUint8List();
+        await glController!.addImage(name, list);
+        if (kDebugMode) {
+          print('Successfully registered MapLibre icon: $name ($assetPath)');
+        }
+      } catch (e) {
+        if (kDebugMode) {
+          print('Failed to register MapLibre icon $name from $assetPath: $e');
+        }
+      }
+    }
+  }
+
   double metersToPixels(double meters, LatLng lat, double zoom) {
-    // Earth’s circumference in meters at the equator
     const double earthCircumference = 40075016.686;
-    final latitudeRadians = lat.latitude * pi / 180;
+    final latitudeRadians = lat.latitude * math.pi / 180;
     final metersPerPixel =
-        earthCircumference * cos(latitudeRadians) / pow(2, zoom + 8);
+        earthCircumference * math.cos(latitudeRadians) / math.pow(2, zoom + 8);
     return meters / metersPerPixel;
   }
 
   LatLng getPolylineCenter(List<LatLng> points) {
     double lat = 0;
     double lng = 0;
-
     for (final p in points) {
       lat += p.latitude;
       lng += p.longitude;
     }
-
     lat /= points.length;
     lng /= points.length;
-
     return LatLng(lat, lng);
+  }
+
+  Widget _buildTileLayer(BuildContext context) {
+    final isDarkMode =
+        widget.options.autoDarkMode &&
+        Theme.of(context).brightness == Brightness.dark;
+    final tileLayer = fm.TileLayer(
+      urlTemplate: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+      subdomains: const ['a', 'b', 'c'],
+      tileProvider: CancellableNetworkTileProvider(),
+    );
+    if (isDarkMode) {
+      return ColorFiltered(
+        colorFilter: const ColorFilter.matrix([
+          -0.2126,
+          -0.7152,
+          -0.0722,
+          0,
+          255,
+          -0.2126,
+          -0.7152,
+          -0.0722,
+          0,
+          255,
+          -0.2126,
+          -0.7152,
+          -0.0722,
+          0,
+          255,
+          0,
+          0,
+          0,
+          1,
+          0,
+        ]),
+        child: tileLayer,
+      );
+    }
+    return tileLayer;
   }
 }
 
-class PmTileMapMarker extends Marker {
+class PmTileMapMarker extends fm.Marker {
   final pm.LatLong coordinates;
-  const PmTileMapMarker({
+  final VoidCallback? onTap;
+  PmTileMapMarker({
     super.point = const LatLng(0, 0),
     required super.child,
     super.alignment,
@@ -245,6 +447,7 @@ class PmTileMapMarker extends Marker {
     super.rotate,
     super.width,
     super.key,
+    this.onTap,
     pm.LatLong? coordinates,
   }) : coordinates = coordinates ?? const pm.LatLong(0, 0);
 }

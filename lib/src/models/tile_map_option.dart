@@ -23,6 +23,14 @@ class TileMapOption {
   final bool keepAlive;
   final List<Polygon> polygons;
   final List<DrawLineOnPoint> drawLineOn;
+  final bool autoDarkMode;
+  final bool showUserLocation;
+  final bool showZoomControls;
+  final bool showScaleBar;
+  final bool use3D;
+  final String? styleUrl;
+  final double initialTilt;
+  final bool enableTerrain;
   TileMapOption({
     LatLong? initialCenter,
     this.initialZoom = 13.0,
@@ -40,6 +48,14 @@ class TileMapOption {
     this.polygons = const [],
     this.keepAlive = false,
     this.onTapAndSearch,
+    this.autoDarkMode = true,
+    this.showUserLocation = false,
+    this.showZoomControls = false,
+    this.showScaleBar = false,
+    this.use3D = false,
+    this.styleUrl,
+    this.initialTilt = 0.0,
+    this.enableTerrain = false,
   }) : initialCenter = initialCenter ?? LatLong(12.8797, 121.7740);
 }
 

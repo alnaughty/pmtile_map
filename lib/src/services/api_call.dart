@@ -11,60 +11,53 @@ import 'package:pmtiles_map/pmtiles_map.dart';
 import 'package:pmtiles_map/src/models/coordinated_location_result.dart';
 
 class TileMapGeoCodingService {
-  static Polygon _boundingBoxToPolygon(List<String> boundingBox) {
-    double south = double.parse(boundingBox[0]);
-    double north = double.parse(boundingBox[1]);
-    double west = double.parse(boundingBox[2]);
-    double east = double.parse(boundingBox[3]);
-    final points = [
-      LatLng(south, west), // SW corner
-      LatLng(north, west), // NW corner
-      LatLng(north, east), // NE corner
-      LatLng(south, east), // SE corner
-      LatLng(south, west), // back to SW to close the polygon
-    ];
-    return Polygon(points: points);
-  }
-
   static Future<LocationResult> reverseGeoCode(LatLong latlng) async {
-    final url = Uri.parse(
-      "https://nominatim.openstreetmap.org/reverse?lat=${latlng.latitude}&lon=${latlng.longitude}&format=json&addressdetails=1",
-    );
-    final response = await http.get(
-      url,
-      headers: {"User-Agent": "LumiereCoding"},
-    );
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-      final addr = data['address'] ?? {};
-      String? barangay;
-      final suburb = addr['suburb'];
-      final neighbourhood = addr['neighbourhood'];
-      if (suburb != null && neighbourhood != null) {
-        barangay = '$neighbourhood, $suburb';
-      } else {
-        barangay =
-            addr['village'] ??
-            addr['quarter'] ??
-            addr['hamlet'] ??
-            suburb ??
-            neighbourhood;
-      }
+    try {
+      final url = Uri.parse(
+        "https://nominatim.openstreetmap.org/reverse?lat=${latlng.latitude}&lon=${latlng.longitude}&format=json&addressdetails=1",
+      );
+      final response = await http.get(
+        url,
+        headers: {"User-Agent": "LumiereCoding"},
+      );
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final addr = data['address'] ?? {};
+        String? barangay;
+        final suburb = addr['suburb'];
+        final neighbourhood = addr['neighbourhood'];
+        if (suburb != null && neighbourhood != null) {
+          barangay = '$neighbourhood, $suburb';
+        } else {
+          barangay =
+              addr['village'] ??
+              addr['quarter'] ??
+              addr['hamlet'] ??
+              suburb ??
+              neighbourhood;
+        }
 
+        return LocationResult(
+          city:
+              addr['county'] ??
+              addr['city'] ??
+              addr['town'] ??
+              addr['residential'],
+          barangay: barangay,
+          province: addr['state'],
+          address: data['display_name'],
+          street: addr['road'],
+          region: addr['region'],
+          country: addr['country'],
+          postalCode: addr['postcode'],
+          countryCode: addr['country_code'],
+        );
+      }
+    } catch (_) {
+      // Network / CORS errors (common on web) – return a coordinate-only fallback.
       return LocationResult(
-        city:
-            addr['county'] ??
-            addr['city'] ??
-            addr['town'] ??
-            addr['residential'],
-        barangay: barangay,
-        province: addr['state'],
-        address: data['display_name'],
-        street: addr['road'],
-        region: addr['region'],
-        country: addr['country'],
-        postalCode: addr['postcode'],
-        countryCode: addr['country_code'],
+        address:
+            '${latlng.latitude.toStringAsFixed(6)}, ${latlng.longitude.toStringAsFixed(6)}',
       );
     }
 
@@ -143,59 +136,50 @@ class TileMapGeoCodingService {
     if (query.isEmpty) return [];
 
     final url = Uri.parse(
-      'https://nominatim.openstreetmap.org/search?q=$query&format=json&addressdetails=1&limit=$limit',
+      'https://photon.komoot.io/api/?q=${Uri.encodeComponent(query)}&limit=$limit',
     );
 
-    final response = await http.get(
-      url,
-      headers: {
-        'User-Agent': 'LumiereCoding/1.0', // Nominatim requires a User-Agent
-      },
-    );
+    final response = await http.get(url);
 
     if (response.statusCode != 200) {
       throw Exception('Failed to search address');
     }
 
-    final List data = json.decode(response.body);
+    final data = json.decode(response.body);
+    final List features = data['features'] ?? [];
 
-    return data.map((e) {
-      final addr = e['address'] ?? {};
+    return features.map((feature) {
+      final props = feature['properties'] ?? {};
+      final geometry = feature['geometry'] ?? {};
+      final coords = geometry['coordinates'] as List?;
 
-      // Extract coordinates
+      // Extract coordinates (Photon returns [lon, lat])
       LatLong? coordinates;
-      if (e['lat'] != null && e['lon'] != null) {
+      if (coords != null && coords.length >= 2) {
         coordinates = LatLong(
-          double.tryParse(e['lat'].toString()) ?? 0,
-          double.tryParse(e['lon'].toString()) ?? 0,
+          (coords[1] as num).toDouble(),
+          (coords[0] as num).toDouble(),
         );
       }
 
       final map = {
-        'city':
-            addr['county'] ??
-            addr['city'] ??
-            addr['town'] ??
-            addr['residential'],
-        'barangay': (() {
-          final suburb = addr['suburb'];
-          final neighbourhood = addr['neighbourhood'];
-          if (suburb != null && neighbourhood != null) {
-            return '$neighbourhood, $suburb';
-          }
-          return addr['village'] ??
-              addr['quarter'] ??
-              addr['hamlet'] ??
-              suburb ??
-              neighbourhood;
-        })(),
-        'province': addr['state'],
-        'address': e['display_name'],
-        'street': addr['road'],
-        'region': addr['region'],
-        'postalCode': addr['postcode'],
-        'country': addr['country'],
-        'countryCode': addr['country_code'],
+        'city': props['city'] ?? props['town'] ?? props['village'],
+        'barangay': props['district'] ?? props['locality'] ?? props['suburb'],
+        'province': props['state'],
+        'address': [
+          props['name'],
+          props['street'],
+          props['housenumber'],
+          props['district'],
+          props['city'],
+          props['state'],
+          props['country'],
+        ].where((e) => e != null).join(', '),
+        'street': props['street'],
+        'region': props['state'],
+        'postalCode': props['postcode'],
+        'country': props['country'],
+        'countryCode': props['countrycode'],
         'lat': coordinates?.latitude,
         'lon': coordinates?.longitude,
       };
